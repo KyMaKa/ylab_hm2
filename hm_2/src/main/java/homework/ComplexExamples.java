@@ -4,11 +4,13 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 public class ComplexExamples {
 
@@ -125,12 +127,10 @@ public class ComplexExamples {
                 Value:1
          */
 
-
-    Set<Person> filteredData = filterRawData(RAW_DATA);
-    Map<String, Integer> mappedData = dataToMap(filteredData);
+    Map<String, Integer> personMap = transformRawData(RAW_DATA);
 
     //Iteration over map to print results.
-    mappedData.forEach((key, value) -> {
+    personMap.forEach((key, value) -> {
       System.out.println("Key: " + key);
       System.out.println("Value:" + value);
     });
@@ -143,7 +143,6 @@ public class ComplexExamples {
 
             [3, 4, 2, 7], 10 -> [3, 7] - вывести пару именно в скобках, которые дают сумму - 10
          */
-
 
     System.out.println("**************************************************");
     System.out.println();
@@ -176,7 +175,6 @@ public class ComplexExamples {
                     fuzzySearch("lw", "cartwheel"); // false
          */
 
-
     System.out.println("**************************************************");
     System.out.println();
     System.out.println("Задание 3. Реализвать функцию нечеткого поиска.");
@@ -191,40 +189,29 @@ public class ComplexExamples {
     assert !fuzzySearch("lw", "cartwheel");
   }
 
-  /**
-   * Sorts input Persons array and filters it, removing duplicates.
-   * @param data - input array of Person type.
-   * @return filtered and sorted by name and id set of Persons.
-   */
-  public static Set<Person> filterRawData(Person[] data) {
-    Set<Person> filteredRawData = new TreeSet<>(
-        Comparator.comparing(Person::getName).thenComparing(Person::getId));
+  public static Map<String, Integer> transformRawData(Person[] data) {
+
+    Map<String, Integer> personMap = new HashMap<>();
+
     if (data != null) {
-      filteredRawData.addAll(List.of(data));
-    } else {
-      System.out.println("Data array to be filtered is null!.");
-    }
-    return filteredRawData;
-  }
+      List<Person> personList = Arrays
+          .stream(data)
+          .sorted(Comparator.comparing(Person::getName).thenComparing(Person::getId))
+          .distinct()
+          .toList();
 
-  /**
-   * Maps set of Persons to a map. For each Person single entry.
-   * @param people - set of Persons.
-   * @return map, where key is name, value - count of Persons with that name.
-   */
-  public static Map<String, Integer> dataToMap(Set<Person> people) {
-    Map<String, Integer> mappedPeople = new HashMap<>();
-
-    for (Person person : people) {
-      if (mappedPeople.containsKey(person.name)) {
-        mappedPeople.put(person.name, mappedPeople.get(person.name) + 1);
-      } else {
-        mappedPeople.put(person.name, 1);
+      for (Person p : personList) {
+        if (personMap.containsKey(p.name)) {
+          personMap.put(p.name, personMap.get(p.name) + 1);
+        } else {
+          personMap.put(p.name, 1);
+        }
       }
     }
 
-    return mappedPeople;
+    return personMap;
   }
+
 
   public static Integer[] findPair(Integer[] array, int sum) {
     Set<Integer> set = new HashSet<>(array.length);
@@ -238,18 +225,17 @@ public class ComplexExamples {
   }
 
   public static boolean fuzzySearch(String substring, String string) {
-    int stringPos = 0;
+    //Position of char in substring.
+    int substringPos = 0;
+    //Amount of same symbols in string.
     int foundCount = 0;
 
     if (substring != null && string != null) {
-
-      for (char c : substring.toCharArray()) {
-        for (int i = stringPos; i < string.length(); i++) {
-          if (string.charAt(i) == c) {
-            foundCount++;
-            stringPos = i + 1;
-            break;
-          }
+      //Iterates over main string (where to find chars from substring).
+      for (char c : string.toCharArray()) {
+        if (foundCount < substring.length() && c == substring.charAt(substringPos)) {
+          foundCount++;
+          substringPos++;
         }
       }
       return foundCount == substring.length();
